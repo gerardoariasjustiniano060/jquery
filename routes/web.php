@@ -22,11 +22,11 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
-
-Route::get('/clientes',[ClienteController::class,'index'])->name('clientes');
+Route::get('/clientes/altas',[ClienteController::class,'index'])->name('cliente.alta');
+Route::get('/clientes/baja',[ClienteController::class,'index'])->name('cliente.baja');
 Route::get('/collection',[ClienteController::class,'collection'])->name('collection');
 Route::get('/cliente/show',[ClienteController::class,'show'])->name('cliente-show');
 Route::get('/cliente/create',[ClienteController::class,'create'])->name('cliente-create');
 Route::post('/cliente/save',[ClienteController::class,'store'])->name('cliente-save');
-Route::put('/cliente/update',[ClienteController::class,'update'])->name('cliente-update');
-Route::delete('/cliente/destroy',[ClienteController::class,'destroy'])->name('cliente-destroy');
+Route::post('/cliente/update',[ClienteController::class,'update'])->name('cliente-update');
+Route::post('/cliente/destroy',[ClienteController::class,'destroy'])->name('cliente-destroy');
