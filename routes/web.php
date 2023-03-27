@@ -23,8 +23,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/clientes/altas',[ClienteController::class,'index'])->name('cliente.alta');
-Route::get('/clientes/baja',[ClienteController::class,'index'])->name('cliente.baja');
-Route::get('/collection',[ClienteController::class,'collection'])->name('collection');
+Route::get('/clientes/baja',[ClienteController::class,'collection_delete'])->name('cliente.baja');
 Route::get('/cliente/show',[ClienteController::class,'show'])->name('cliente-show');
 Route::get('/cliente/create',[ClienteController::class,'create'])->name('cliente-create');
 Route::post('/cliente/save',[ClienteController::class,'store'])->name('cliente-save');

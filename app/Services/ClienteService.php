@@ -9,7 +9,16 @@ class ClienteService
 {
     public function data()
     {
-        return ClienteModel::get();
+        return ClienteModel::select(
+            'id',
+            'nombres',
+            'apellidos',
+            'zona',
+            'dni',
+            'estado_civil',
+            'fecha_nacimiento',
+            'telefono',
+        )->get();
     }
     public function data_delete()
     {

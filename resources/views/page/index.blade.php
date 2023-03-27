@@ -124,8 +124,21 @@
         {{-- Inicializacion DataTable --}}
         <script>
             $(() => {
+                let isEdit = false;
+
+                let formData = {
+                    id : null,
+                    nombres : null,
+                    apellidos : null,
+                    zona : null,
+                    telefono: null,
+                    fecha_nacimiento : null,
+                    estado_civil : null,
+                    dni : null
+                };
+
                 var table = $('#datatable').DataTable({
-                    "ajax" : "{{route('cliente.baja')}}",
+                    "ajax" : "{{route('cliente.alta')}}",
                     "columns" : [
                         {data : 'id'},
                         {data: 'nombres'},
@@ -135,10 +148,20 @@
                         {data: 'estado_civil'},
                         {data: 'fecha_nacimiento'},
                         {data: 'telefono'},
-                        {data: 'action' , ordenable :false}
+                        {
+                            data : null,
+                            render : function(data, type, row) {
+                                return '<button class="btn-editar btn btn-sm btn-primary rounded-circle" data-id="' + row.id + '">' +
+                                            '<i class="fa fa-edit" aria-hidden="true"></i>' +
+                                        '</button>' +
+                                        '<button class="btn-eliminar btn btn-sm btn-danger rounded-circle" data-id="' + row.id + '">' +
+                                            '<i class="fa fa-trash"></i>' +
+                                        '</button>';
+                            },
+                            "orderable": false
+                        }
                     ],
-                    "responsive": true,
-                    // "scrollX": true,
+                    // "responsive": true,
                     "language": {
                         "search": '',
                         "lengthMenu": "_MENU_",
@@ -147,8 +170,6 @@
                         "infoEmpty": "No hay registros disponibles",
                         "infoFiltered": "(filtrados de _MAX_ registros totales)",
                     },
-                    // "pagingType": "scrolling",
-                    // "searching" : true,
                     "initComplete": function(settings, json) {
                         $(this.api().table().container()).addClass('table table-striped');
                         
@@ -160,31 +181,20 @@
                             select.addClass('form-control form-control-sm');
 
                     },
-                    // "columnDefs": [
-                    //     { "width": "10%", "targets": 0 },
-                    //     { "width": "10%", "targets": 1 },
-                    //     { "width": "10%", "targets": 2 },
-                    //     { "width": "10%", "targets": 3 },
-                    //     { "width": "10%", "targets": 4 },
-                    //     { "width": "40%", "targets": 5 },
-                    //     { "width": "40%", "targets": 6 },
-                    //     { "width": "40%", "targets": 7 },
-                    //     { "width": "10%", "targets": 8 },
-                    // ],
-                    "autoWidth": true,
-                    "headerCallback": function(thead, data, start, end, display) {
-                        $(thead).find('th').css('border-bottom', '2px solid #ddd');
-                        $(thead).find('th').css('background-color', '#f8f8f8');
+                    "createdRow": function(row, data, dataIndex) {
+                        $(row).find('.btn-editar').on('click', function() {
+                            updateCliente(data);
+                        });
+                    
+                        $(row).find('.btn-eliminar').on('click', function() {
+                            deleteCliente(data);
+                        });
                     }
                 });
-            });
-        </script>
 
-        {{-- Delete Object DataTable --}}
-        <script>
-            $(()=>{
-                $(document).on('click','.delete',()=>{
-                    let  id = $(".delete").attr("id");
+                function deleteCliente(data){
+                    let id = data.id;
+
                     Swal.fire({
                         title: 'Cancelar?',
                         text: `¿Quieres eliminar el registro con ID ${id}?`,
@@ -221,131 +231,122 @@
                             });
                         }
                     });
+                }
+                function updateCliente(data){
+                    $("#title-modal").text("Editar el cliente #"+data.id);
+                    $("#form_object").modal('show');
+                    formData = {...data};
+                    loadingCliente(formData);
+                }
+                function loadingCliente(data){
+                    isEdit = true;
+                    $("#nombres").val(data.nombres);
+                    $("#apellidos").val(data.apellidos);
+                    $("#zona").val(data.zona);
+                    $("#telefono").val(data.telefono);
+                    $("#fecha_nacimiento").val(data.fecha_nacimiento);
+                    $("#estado_civil").val(data.estado_civil);
+                    $("#dni").val(data.dni);
+                }
+                function loadingFormData(){
+                    const dataClone = {...formData};
+
+                    dataClone['nombres'] = $("#nombres").val();
+                    dataClone['apellidos'] = $("#apellidos").val();
+                    dataClone['zona'] = $("#zona").val();
+                    dataClone['telefono'] = $("#telefono").val();
+                    dataClone['fecha_nacimiento'] = $("#fecha_nacimiento").val();
+                    dataClone['estado_civil'] = $("#estado_civil").val();
+                    dataClone['dni'] = $("#dni").val();
+
+                    formData = {...dataClone};
+                }
+                // reset data
+                function resetData(){
+                    formData = {
+                        id : null,
+                        nombres : null,
+                        apellidos : null,
+                        zona : null,
+                        telefono: null,
+                        fecha_nacimiento : null,
+                        estado_civil : null,
+                        dni : null
+                    };  
+                    isEdit = false;
+                    $("#nombres").val(null);
+                    $("#apellidos").val(null);
+                    $("#zona").val(null);
+                    $("#telefono").val(null);
+                    $("#fecha_nacimiento").val(null);
+                    $("#estado_civil").val(null);
+                    $("#dni").val(null);
+                }
+                // save and update cliente
+                $("#save").click(()=>{
+                    if (isEdit) {
+                        loadingFormData();
+                        fetch('/cliente/update', {
+                            method: 'POST',
+                            body: JSON.stringify(formData),
+                            headers: {
+                                'Content-type': 'application/json; charset=UTF-8',
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.fire({
+                                title :  'Edición!',
+                                text  :  data.message,
+                                icon  : 'success',
+                                timer : 3000
+                            });
+                        })
+                        .catch(error => {
+                            console.error(error)
+                        });
+                    }else{
+                        loadingFormData();
+
+                        fetch('/cliente/save', {
+                            method: 'POST',
+                            body: JSON.stringify(formData),
+                            headers: {
+                                'Content-type': 'application/json; charset=UTF-8',
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.fire({
+                                title :  'Edición!',
+                                text  :  data.message,
+                                icon  : 'success',
+                                timer : 3000
+                            });
+                        })
+                        .catch(error => {
+                            console.error(error)
+                        });
+                    }
+
+                    $("#datatable").DataTable().ajax.reload();
+                    $("#form_object").modal("hide");
+                    resetData();
+                });
+
+                // modal create cliente 
+                $(document).on('click','.create',()=>{
+                    $("#title-modal").text("Crear un cliente");
+                    $("#form_object").modal('show');
+                });
+
+                $("#close").click(()=>{
+                    $("#form_object").modal("hide");
+                    resetData();
                 });
             });
-        </script>
-
-        {{-- Add and Update Object DataTable --}}
-        <script>
-            let isEdit = false;
-
-            let dataUpdate = {
-                id : null,
-                nombres : null,
-                apellidos : null,
-                zona : null,
-                telefono: null,
-                fecha_nacimiento : null,
-                estado_civil : null,
-                dni : null
-            };
-
-            // open modal - loading data 
-            $(document).on('click','.update',()=>{
-                let response = $(".update").attr("id");
-                let cliente = JSON.parse(response); 
-                $("#title-modal").text("Editar el cliente #"+cliente.id);
-                $("#form_object").modal('show');
-                dataUpdate = {...cliente};
-                loadingCliente();
-            });
-
-            // open modal 
-            $(document).on('click','.create',()=>{
-                $("#title-modal").text("Crear un cliente");
-                $("#form_object").modal('show');
-            });
-
-            // loading data
-            function loadingCliente(){
-                const cliente = {...dataUpdate};
-                isEdit = true;
-
-                $("#nombres").val(cliente.nombres);
-                $("#apellidos").val(cliente.apellidos);
-                $("#zona").val(cliente.zona);
-                $("#telefono").val(cliente.telefono);
-                $("#fecha_nacimiento").val(cliente.fecha_nacimiento);
-                $("#estado_civil").val(cliente.estado_civil);
-                $("#dni").val(cliente.dni);
-            }
-
-            // Close Modal
-            $("#close").click(()=>{
-                $("#form_object").modal("hide");
-            });
-
-            // save Object
-            $("#save").click(()=>{
-                if (isEdit) {
-                    fetch('/cliente/update', {
-                        method: 'POST',
-                        body: JSON.stringify(dataUpdate),
-                        headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        Swal.fire({
-                            title :  'Edición!',
-                            text  :  data.message,
-                            icon  : 'success',
-                            timer : 3000
-                        });
-                        $("#datatable").DataTable().ajax.reload();
-                        $("#form_object").modal("hide");
-                    })
-                    .catch(error => {
-                        console.error(error)
-                    });
-                }else{
-                    fetch('/cliente/save', {
-                        method: 'POST',
-                        body: JSON.stringify(dataUpdate),
-                        headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        Swal.fire({
-                            title :  'Edición!',
-                            text  :  data.message,
-                            icon  : 'success',
-                            timer : 3000
-                        });
-                        $("#datatable").DataTable().ajax.reload();
-                        $("#form_object").modal("hide");
-                    })
-                    .catch(error => {
-                        console.error(error)
-                    });
-                }
-            });
-
-            // change field
-            function handleInputChange(event){
-                const dataClone = {...dataUpdate};
-                dataClone[event.target.name] = event.target.value;
-                dataUpdate = {...dataClone};
-            }
-
-            // reset data 
-            function resetData(){
-                dataUpdate = {
-                    id : null,
-                    nombres : null,
-                    apellidos : null,
-                    zona : null,
-                    telefono: null,
-                    fecha_nacimiento : null,
-                    estado_civil : null,
-                    dni : null
-                };
-            }
         </script>
     @endpush
 @endsection
