@@ -24,6 +24,7 @@ Route::middleware(['auth'])->group(function () {
 
 
 Route::get('/clientes',[ClienteController::class,'index'])->name('clientes');
+Route::get('/collection',[ClienteController::class,'collection'])->name('collection');
 Route::get('/cliente/show',[ClienteController::class,'show'])->name('cliente-show');
 Route::get('/cliente/create',[ClienteController::class,'create'])->name('cliente-create');
 Route::post('/cliente/save',[ClienteController::class,'store'])->name('cliente-save');
